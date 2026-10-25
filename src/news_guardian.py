@@ -22,6 +22,30 @@ from config import CRISIS_KEYWORDS_EN, GUARDIAN_API_KEY, RAW_DIR, START_DATE
 API_URL = "https://content.guardianapis.com/search"
 OUT_DIR = RAW_DIR / "guardian"
 PAUSE_SECONDS = 1.0  # Pause zwischen zwei Abrufen, um die API zu schonen
+MAX_RETRIES = 5  # so oft versuchen wir es, wenn der Server kurz überlastet ist
+
+
+def get_with_retry(params: dict) -> dict:
+    """Ruft die API ab und versucht es bei kurzen Serverfehlern erneut.
+
+    Fehler wie 503 (Server überlastet) oder ein Verbindungsabbruch gehen meist
+    nach kurzer Zeit vorbei. Wir warten dann 5, 10, 20, ... Sekunden und
+    probieren es noch einmal, statt das ganze Jahr zu verlieren.
+    """
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            response = requests.get(API_URL, params=params, timeout=30)
+            if response.status_code not in (429, 500, 502, 503, 504):
+                response.raise_for_status()  # andere Fehler (z.B. falscher Key) sofort melden
+                return response.json()["response"]
+            problem = f"Fehler {response.status_code}"
+        except (requests.ConnectionError, requests.Timeout) as error:
+            problem = type(error).__name__
+        if attempt == MAX_RETRIES:
+            raise RuntimeError(f"Guardian-API antwortet nicht ({problem}), später erneut starten.")
+        wait = 5 * 2 ** (attempt - 1)
+        print(f"  {problem}, neuer Versuch in {wait} Sekunden ({attempt}/{MAX_RETRIES - 1}) ...")
+        time.sleep(wait)
 
 
 def build_query() -> str:
@@ -43,9 +67,7 @@ def fetch_year(year: int) -> list[dict]:
             "show-fields": "headline,trailText,bodyText",
             "api-key": GUARDIAN_API_KEY,
         }
-        response = requests.get(API_URL, params=params, timeout=30)
-        response.raise_for_status()
-        data = response.json()["response"]
+        data = get_with_retry(params)
         articles.extend(data["results"])
         pages = data["pages"]
         print(f"  {year}: Seite {page}/{pages}")
