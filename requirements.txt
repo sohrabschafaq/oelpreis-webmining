@@ -1,0 +1,26 @@
+# Installieren mit:  pip install -r requirements.txt
+
+# Grundlagen
+requests
+pandas
+python-dotenv
+
+# Schritt 1: Preise
+fredapi
+yfinance
+
+# Schritt 2: Nachrichten
+gdeltdoc
+scrapy
+
+# Schritt 3: Textanalyse
+nltk
+ollama
+
+# Schritt 5: Modelle
+scikit-learn
+
+# Schritt 6: Visualisierung
+matplotlib
+plotly
+streamlit

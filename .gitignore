@@ -1,0 +1,25 @@
+# --- Geheimnisse: NIE committen (das Repo ist öffentlich!) ---
+.env
+*.key
+
+# --- Daten: bleiben lokal ---
+# Rohdaten enthalten fremde Artikeltexte (Guardian, Tagesschau), die wir
+# nicht veröffentlichen dürfen. Außerdem werden die Dateien schnell groß.
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# --- Editor / Betriebssystem ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
